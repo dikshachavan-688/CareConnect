@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareConnect – Elderly Assistance & Care Management</title>
+<style>
+:root{--bg:#f4f8f7;--card:#fff;--ink:#17302e;--mute:#5c726f;--brand:#0f766e;--brand2:#14b8a6;--line:#d9e6e3;--red:#c62828;--amber:#b45309;--ok:#2e7d32;--r:16px}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:18px;line-height:1.45}
+header{background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.35rem;flex:1}
+header small{display:block;font-weight:400;opacity:.85;font-size:.8rem}
+.role{display:flex;gap:6px;align-items:center;font-size:.9rem}
+button,.btn{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:10px 18px;background:var(--brand);color:#fff;font-weight:600}
+button:hover{filter:brightness(1.1)}
+button.ghost{background:#e6f2ef;color:var(--brand)}
+button.danger{background:var(--red)}
+button.small{padding:5px 12px;font-size:.85rem}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:62px;z-index:4}
+nav button{background:transparent;color:var(--ink);white-space:nowrap;padding:9px 14px}
+nav button.on{background:var(--brand);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 110px}
+section{display:none}section.on{display:block}
+h2{margin:.2em 0 .6em}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card h3{margin:0 0 6px;font-size:.8rem;letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.big{font-size:1.5rem;font-weight:700}
+form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end;margin-bottom:16px}
+label{font-size:.85rem;color:var(--mute);display:block}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:3px solid #99e0d6;border-color:var(--brand)}
+.item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px;flex-wrap:wrap}
+.item .t{font-weight:700}.item .s{color:var(--mute);font-size:.9rem}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:#e6f2ef;color:var(--brand)}
+.tag.ok{background:#e3f4e4;color:var(--ok)}.tag.late{background:#fde7e7;color:var(--red)}.tag.warn{background:#fdf0dc;color:var(--amber)}
+.empty{color:var(--mute);padding:14px;text-align:center;border:2px dashed var(--line);border-radius:12px}
+.sos{position:fixed;right:18px;bottom:18px;z-index:9;width:92px;height:92px;border-radius:50%;background:var(--red);font-size:1.15rem;box-shadow:0 6px 18px rgba(198,40,40,.5);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 16px rgba(198,40,40,.12)}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:20px;padding:24px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+.toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:#17302e;color:#fff;padding:12px 20px;border-radius:12px;z-index:30;display:none;max-width:90%}
+.alarm{background:#fff7e0;border:2px solid #f5b301}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:.92rem}
+th{background:#e6f2ef}
+svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+.ro .editonly{display:none!important}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+body.big-text{font-size:21px}
+@media print{header,nav,.sos,.noprint{display:none!important}section{display:block!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🩺 CareConnect<small>Care that stays connected</small></h1>
+  <span id="srv" class="tag warn">…</span>
+  <div class="role">
+    <span id="roleLbl">Patient mode</span>
+    <button class="ghost small" id="roleBtn">Caregiver login</button>
+    <button class="ghost small" id="txtBtn" title="Bigger text">A+</button>
+  </div>
+</header>
+<nav id="nav">
+  <button data-t="home" class="on">🏠 Dashboard</button>
+  <button data-t="meds">💊 Medicines</button>
+  <button data-t="appts">📅 Appointments</button>
+  <button data-t="contacts">📞 Emergency</button>
+  <button data-t="health">❤️ Health Metrics</button>
+  <button data-t="info">📋 Care Details</button>
+  <button data-t="pharm">🏪 Pharmacy</button>
+  <button data-t="family">👪 Family Monitor</button>
+</nav>
+
+<main id="app">
+<!-- DASHBOARD -->
+<section id="home" class="on">
+  <h2 id="greet">Good morning!</h2>
+  <div class="grid">
+    <div class="card"><h3>💊 Next dose</h3><div class="big" id="dNext">—</div><div class="s" id="dNextSub"></div></div>
+    <div class="card"><h3>📅 Next appointment</h3><div class="big" id="dAppt">—</div><div class="s" id="dApptSub"></div></div>
+    <div class="card"><h3>📞 Emergency contacts</h3><div class="big" id="dCont">0</div><div class="s">saved &amp; ready</div></div>
+    <div class="card"><h3>❤️ Latest health</h3><div class="big" id="dHealth">—</div><div class="s" id="dHealthSub"></div></div>
+  </div>
+  <h2 style="margin-top:24px">Today's medicines</h2>
+  <div id="dToday"></div>
+  <div class="row noprint" style="margin-top:14px">
+    <button id="checkinBtn" class="editonly">✅ I'm OK – daily check-in</button>
+    <button class="ghost" id="notifBtn">🔔 Enable reminder notifications</button>
+  </div>
+</section>
+
+<!-- MEDICINES -->
+<section id="meds">
+  <h2>💊 Medicine schedule</h2>
+  <form id="medForm" class="editonly">
+    <div><label>Medicine name</label><input id="mName" required placeholder="e.g. Metformin"></div>
+    <div><label>Dose</label><input id="mDose" placeholder="e.g. 500 mg"></div>
+    <div><label>Time</label><input id="mTime" type="time" required></div>
+    <div><label>Notes</label><input id="mNote" placeholder="after food"></div>
+    <div><label>Stock left (tablets)</label><input id="mStock" type="number" min="0" value="30"></div>
+    <button>➕ Add medicine</button>
+  </form>
+  <div id="medList"></div>
+</section>
+
+<!-- APPOINTMENTS -->
+<section id="appts">
+  <h2>📅 Doctor appointments</h2>
+  <form id="apptForm" class="editonly">
+    <div><label>Doctor</label><input id="aDoc" required placeholder="Dr. Sharma"></div>
+    <div><label>Date</label><input id="aDate" type="date" required></div>
+    <div><label>Time</label><input id="aTime" type="time"></div>
+    <div><label>Purpose</label><input id="aPurp" placeholder="Check-up"></div>
+    <button>➕ Save appointment</button>
+  </form>
+  <div id="apptList"></div>
+</section>
+
+<!-- CONTACTS -->
+<section id="contacts">
+  <h2>📞 Emergency contacts</h2>
+  <form id="contForm" class="editonly">
+    <div><label>Name</label><input id="cName" required placeholder="Son – Sagar"></div>
+    <div><label>Relation</label><input id="cRel" placeholder="Family / Doctor / Neighbour"></div>
+    <div><label>Phone (with country code)</label><input id="cPhone" required placeholder="+919876543210" pattern="[+0-9 ]{8,16}"></div>
+    <button>➕ Add contact</button>
+  </form>
+  <div id="contList"></div>
+  <p class="s">🆘 The red button (bottom-right, on every page) alerts all these contacts and shares your live GPS location.</p>
+</section>
+
+<!-- HEALTH -->
+<section id="health">
+  <h2>❤️ Health metrics tracker</h2>
+  <form id="hForm" class="editonly">
+    <div><label>BP systolic</label><input id="hSys" type="number" min="50" max="260"></div>
+    <div><label>BP diastolic</label><input id="hDia" type="number" min="30" max="180"></div>
+    <div><label>Blood sugar (mg/dL)</label><input id="hSug" type="number" min="20" max="600"></div>
+    <div><label>Heart rate (bpm)</label><input id="hHr" type="number" min="30" max="220"></div>
+    <div><label>Sleep (hours)</label><input id="hSlp" type="number" step="0.5" min="0" max="24"></div>
+    <div><label>Sleep quality</label><select id="hQ"><option value="">—</option><option>Poor</option><option>Fair</option><option>Good</option><option>Excellent</option></select></div>
+    <button>➕ Save reading</button>
+  </form>
+  <div class="row" style="margin-bottom:10px">
+    <select id="hChart" style="max-width:240px"><option value="sys">Blood pressure</option><option value="sug">Blood sugar</option><option value="hr">Heart rate</option><option value="slp">Sleep hours</option></select>
+    <button class="ghost noprint" onclick="window.print()">🖨️ Print / save as PDF for doctor</button>
+    <button class="ghost noprint" id="csvBtn">⬇️ Download CSV</button>
+  </div>
+  <div id="chartBox"></div>
+  <h3>History</h3>
+  <div style="overflow:auto"><table><thead><tr><th>Date</th><th>BP</th><th>Sugar</th><th>HR</th><th>Sleep</th><th class="editonly"></th></tr></thead><tbody id="hBody"></tbody></table></div>
+</section>
+
+<!-- CARE DETAILS -->
+<section id="info">
+  <h2>📋 Care details</h2>
+  <form id="infoForm" class="editonly" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    <div><label>Full name</label><input id="iName"></div>
+    <div><label>Age</label><input id="iAge" type="number"></div>
+    <div><label>Blood group</label><input id="iBlood" placeholder="O+"></div>
+    <div><label>Allergies</label><input id="iAll"></div>
+    <div><label>Medical conditions</label><input id="iCond" placeholder="Diabetes, hypertension"></div>
+    <div><label>Home address</label><input id="iAddr"></div>
+    <div><label>Insurance / ID no.</label><input id="iIns"></div>
+    <div style="grid-column:1/-1"><label>Other notes (diet, doctor instructions…)</label><textarea id="iNote" rows="3"></textarea></div>
+    <button>💾 Save details</button>
+  </form>
+  <div class="card" id="infoView"></div>
+  <form id="pinForm" class="editonly" style="margin-top:16px">
+    <div><label>Caregiver login PIN (4–8 digits)</label><input id="pinNew" type="password" inputmode="numeric" placeholder="New PIN"></div>
+    <button>🔑 Change PIN</button>
+  </form>
+</section>
+
+<!-- PHARMACY -->
+<section id="pharm">
+  <h2>🏪 Pharmacy &amp; refill coordination</h2>
+  <form id="pharmForm" class="editonly">
+    <div><label>Pharmacy name</label><input id="pName" placeholder="City Medicals"></div>
+    <div><label>Pharmacy phone / WhatsApp</label><input id="pPhone" placeholder="+91…"></div>
+    <button>💾 Save pharmacy</button>
+  </form>
+  <div class="card" style="margin-bottom:14px"><h3>Refill alerts</h3><div id="refillList"></div></div>
+  <h3>Refill requests</h3>
+  <div id="refReqs"></div>
+</section>
+
+<!-- FAMILY -->
+<section id="family">
+  <h2>👪 Remote family monitoring</h2>
+  <div class="grid" id="famCards"></div>
+  <h3 style="margin-top:20px">Activity log</h3>
+  <div id="logList"></div>
+  <p class="s">Demo note: this version stores data on this device. Real remote access needs the future-scope <b>database + caregiver login + mobile notifications</b>.</p>
+</section>
+</main>
+
+<button class="sos" id="sosBtn" title="Emergency">🆘<br>SOS</button>
+
+<div class="modal" id="sosModal"><div class="box">
+  <h2 style="color:var(--red)">🆘 Emergency alert</h2>
+  <p id="sosStatus">Getting your live location…</p>
+  <div id="sosActions"></div>
+  <div class="row" style="margin-top:14px"><button class="ghost" id="sosClose">Close</button></div>
+</div></div>
+
+<div class="modal" id="loginModal"><div class="box">
+  <h2>Caregiver login</h2>
+  <p class="s">Caregivers get a read-only view. Default PIN is <b>1234</b>. The patient can change it in Care Details.</p>
+  <input id="pinIn" type="password" inputmode="numeric" placeholder="Enter PIN">
+  <div class="row" style="margin-top:12px"><button id="pinOk">Login</button><button class="ghost" id="pinCancel">Cancel</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ storage ============ */
+const KEY='careconnect_v1';
+const def={meds:[],appts:[],contacts:[],health:[],info:{},pharm:{},refills:[],log:[],taken:{},fired:{},pin:'1234'};
+let D,ver=0,online=false,token='',pending=null;
+try{D=Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){D={...def}}
+/* save(): always keep a local copy; if the Java server is reachable, sync to it */
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}
+  if(!online||readOnly)return;
+  clearTimeout(pending);pending=setTimeout(push,400)}
+async function push(){pending=null;
+  try{const b={...D};delete b.pin;
+    const r=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-Token':token},body:JSON.stringify(b)});
+    if(r.ok){ver=(await r.json()).version;setStatus(true)}else setStatus(false)}catch(e){setStatus(false)}}
+function setStatus(ok){const s=$('srv');s.textContent=ok?'🟢 Server connected':online?'🟠 Server unreachable':'⚪ Offline mode (this device only)';s.className='tag '+(ok?'ok':'warn')}
+async function poll(){ /* live refresh so family sees changes */
+  if(!online||pending)return;
+  try{const v=+(await(await fetch('/api/version',{cache:'no-store'})).text());setStatus(true);
+    if(v!==ver){const r=await fetch('/api/state',{cache:'no-store'});const s=await r.json();ver=+r.headers.get('X-Version')||v;
+      D=Object.assign({},def,s);try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}render()}}
+  catch(e){setStatus(false)}}
+async function init(){
+  try{const r=await fetch('/api/state',{cache:'no-store'});
+    if(r.ok){online=true;ver=+r.headers.get('X-Version')||0;const s=await r.json();
+      if(s&&Object.keys(s).length)D=Object.assign({},def,s);else await push(); /* first run: upload local data */
+      setStatus(true)}else setStatus(false)}catch(e){setStatus(false)}
+  render();checkReminders();setInterval(poll,5000)}
+const ED={}; /* ids currently being edited, per kind */
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const nowHM=()=>new Date().toTimeString().slice(0,5);
+const fmt12=t=>{if(!t)return'';let[h,m]=t.split(':').map(Number);return(h%12||12)+':'+String(m).padStart(2,'0')+(h<12?' AM':' PM')};
+let readOnly=false;
+function log(msg){D.log.unshift({t:new Date().toLocaleString(),msg});D.log=D.log.slice(0,100);save()}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)}
+function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.2;o.start(c.currentTime+d);o.stop(c.currentTime+d+.2)})}catch(e){}}
+
+/* ============ navigation ============ */
+$('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));render()});
+
+/* ============ medicines ============ */
+const btnOf=f=>$(f).querySelector('button:not(.cancelEdit)');
+function finishEdit(kind,form,label){ED[kind]=null;btnOf(form).textContent=label;const c=$(form).querySelector('.cancelEdit');if(c)c.remove()}
+function beginEdit(kind,form,id,label){ED[kind]=id;btnOf(form).textContent=label;
+  if(!$(form).querySelector('.cancelEdit')){const c=document.createElement('button');c.type='button';c.className='ghost cancelEdit';c.textContent='✖ Cancel edit';
+    c.onclick=()=>{$(form).reset();finishEdit(kind,form,$(form).dataset.add)};$(form).appendChild(c)}
+  $(form).scrollIntoView({behavior:'smooth',block:'center'})}
+['medForm','apptForm','contForm','hForm'].forEach(f=>$(f).dataset.add=btnOf(f).textContent);
+$('medForm').onsubmit=e=>{e.preventDefault();
+  const o={name:$('mName').value.trim(),dose:$('mDose').value.trim(),time:$('mTime').value,note:$('mNote').value.trim(),stock:+$('mStock').value||0};
+  if(ED.med){Object.assign(D.meds.find(x=>x.id===ED.med)||{},o);log('Medicine updated: '+o.name);finishEdit('med','medForm','➕ Add medicine')}
+  else{D.meds.push({id:uid(),...o});log('Medicine added: '+o.name)}
+  D.meds.sort((a,b)=>a.time.localeCompare(b.time));save();e.target.reset();$('mStock').value=30;render();toast('Medicine saved')};
+function editMed(id){const m=D.meds.find(x=>x.id===id);if(!m)return;
+  $('mName').value=m.name;$('mDose').value=m.dose;$('mTime').value=m.time;$('mNote').value=m.note;$('mStock').value=m.stock;beginEdit('med','medForm',id,'💾 Update medicine')}
+function takenKey(id){return today()+'|'+id}
+function markTaken(id){const m=D.meds.find(x=>x.id===id);D.taken[takenKey(id)]=nowHM();if(m&&m.stock>0)m.stock--;log('Took '+(m?m.name:'medicine'));save();render()}
+function delMed(id){if(!confirm('Delete this medicine?'))return;D.meds=D.meds.filter(m=>m.id!==id);save();render()}
+function renderMeds(){
+  $('medList').innerHTML=D.meds.length?D.meds.map(m=>{const t=D.taken[takenKey(m.id)];
+    return `<div class="item"><div><div class="t">${esc(m.name)} ${m.dose?'· '+esc(m.dose):''}</div><div class="s">⏰ ${fmt12(m.time)} ${m.note?'· '+esc(m.note):''} · stock: ${m.stock}</div></div>
+    <div class="row">${t?`<span class="tag ok">✔ taken ${fmt12(t)}</span>`:`<button class="small editonly" onclick="markTaken('${m.id}')">Mark taken</button>`}
+    <button class="small ghost editonly" onclick="editMed('${m.id}')">✏️ Edit</button>
+    <button class="small danger editonly" onclick="delMed('${m.id}')">Delete</button></div></div>`}).join(''):'<div class="empty">No medicines yet. Add one above.</div>'}
+
+/* ============ appointments ============ */
+$('apptForm').onsubmit=e=>{e.preventDefault();
+  const o={doc:$('aDoc').value.trim(),date:$('aDate').value,time:$('aTime').value,purp:$('aPurp').value.trim()};
+  if(ED.appt){Object.assign(D.appts.find(x=>x.id===ED.appt)||{},o);finishEdit('appt','apptForm','➕ Save appointment');log('Appointment updated: '+o.doc)}
+  else{D.appts.push({id:uid(),...o});log('Appointment saved: '+o.doc)}
+  D.appts.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));save();e.target.reset();render();toast('Appointment saved')};
+function editAppt(id){const a=D.appts.find(x=>x.id===id);if(!a)return;
+  $('aDoc').value=a.doc;$('aDate').value=a.date;$('aTime').value=a.time||'';$('aPurp').value=a.purp||'';beginEdit('appt','apptForm',id,'💾 Update appointment')}
+function delAppt(id){if(!confirm('Delete appointment?'))return;D.appts=D.appts.filter(a=>a.id!==id);save();render()}
+function dayDiff(d){return Math.round((new Date(d+'T00:00')-new Date(today()+'T00:00'))/864e5)}
+function when(d){const n=dayDiff(d);return n===0?'Today':n===1?'Tomorrow':n<0?Math.abs(n)+' days ago':'in '+n+' days'}
+function renderAppts(){
+  $('apptList').innerHTML=D.appts.length?D.appts.map(a=>{const n=dayDiff(a.date);
+    return `<div class="item"><div><div class="t">${esc(a.doc)} — ${esc(a.purp||'Visit')}</div><div class="s">📅 ${esc(a.date)} ${fmt12(a.time)}</div></div>
+    <div class="row"><span class="tag ${n<0?'late':n<=1?'warn':''}">${when(a.date)}</span><button class="small ghost editonly" onclick="editAppt('${a.id}')">✏️ Edit</button><button class="small danger editonly" onclick="delAppt('${a.id}')">Delete</button></div></div>`}).join(''):'<div class="empty">No appointments saved.</div>'}
+
+/* ============ contacts ============ */
+$('contForm').onsubmit=e=>{e.preventDefault();
+  const o={name:$('cName').value.trim(),rel:$('cRel').value.trim(),phone:$('cPhone').value.replace(/\s/g,'')};
+  if(ED.cont){Object.assign(D.contacts.find(x=>x.id===ED.cont)||{},o);finishEdit('cont','contForm','➕ Add contact');log('Contact updated: '+o.name)}
+  else{D.contacts.push({id:uid(),...o});log('Contact added: '+o.name)}
+  save();e.target.reset();render();toast('Contact saved')};
+function editCont(id){const c=D.contacts.find(x=>x.id===id);if(!c)return;
+  $('cName').value=c.name;$('cRel').value=c.rel||'';$('cPhone').value=c.phone;beginEdit('cont','contForm',id,'💾 Update contact')}
+function delCont(id){if(!confirm('Remove contact?'))return;D.contacts=D.contacts.filter(c=>c.id!==id);save();render()}
+function renderContacts(){
+  $('contList').innerHTML=D.contacts.length?D.contacts.map(c=>`<div class="item"><div><div class="t">${esc(c.name)} <span class="tag">${esc(c.rel||'Contact')}</span></div><div class="s">${esc(c.phone)}</div></div>
+   <div class="row"><a class="btn small" href="tel:${esc(c.phone)}">📞 Call</a><button class="small ghost editonly" onclick="editCont('${c.id}')">✏️ Edit</button><button class="small danger editonly" onclick="delCont('${c.id}')">Remove</button></div></div>`).join(''):'<div class="empty">Add at least one contact so the SOS button can alert someone.</div>'}
+
+/* ============ SOS ============ */
+$('sosBtn').onclick=()=>{
+  $('sosModal').classList.add('on');
+  if(!D.contacts.length){$('sosStatus').textContent='No emergency contacts saved yet! Please add contacts first. You can still call emergency services:';
+    $('sosActions').innerHTML='<a class="btn danger" href="tel:112">📞 Call 112</a>';return}
+  $('sosStatus').textContent='📡 Getting your live GPS location…';$('sosActions').innerHTML='';
+  const done=(link,note)=>{
+    const name=D.info.name||'The user';
+    const msg=`🆘 EMERGENCY! ${name} needs help. ${link?'Live location: '+link:'Location unavailable.'}`;
+    log('SOS triggered. '+(link||'No GPS'));save();
+    $('sosStatus').innerHTML=(link?'✅ Location found. ':'⚠️ '+note+' ')+'Tap each contact to send the alert:';
+    $('sosActions').innerHTML=D.contacts.map(c=>{const p=c.phone.replace(/[^\d]/g,'');
+      return `<div class="item"><div class="t">${esc(c.name)}</div><div class="row">
+      <a class="btn small" href="https://wa.me/${p}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn small" href="sms:${esc(c.phone)}?body=${encodeURIComponent(msg)}">SMS</a>
+      <a class="btn small danger" href="tel:${esc(c.phone)}">Call</a></div></div>`}).join('')+
+      '<a class="btn danger" style="display:inline-block;margin-top:8px" href="tel:112">📞 Call 112 (emergency)</a>'+
+      (link?`<p class="s">Your location: <a href="${link}" target="_blank" rel="noopener">${link}</a></p>`:'')};
+  if(!navigator.geolocation)return done('','GPS not supported.');
+  navigator.geolocation.getCurrentPosition(p=>done(`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`),
+    err=>done('','Could not get GPS ('+err.message+').'),{enableHighAccuracy:true,timeout:10000});
+};
+$('sosClose').onclick=()=>$('sosModal').classList.remove('on');
+
+/* ============ health ============ */
+$('hForm').onsubmit=e=>{e.preventDefault();
+  const r={sys:+$('hSys').value||null,dia:+$('hDia').value||null,sug:+$('hSug').value||null,hr:+$('hHr').value||null,slp:+$('hSlp').value||null,q:$('hQ').value};
+  if(!r.sys&&!r.sug&&!r.hr&&!r.slp){toast('Enter at least one value');return}
+  if(ED.hl){Object.assign(D.health.find(x=>x.id===ED.hl)||{},r);finishEdit('hl','hForm','➕ Save reading');log('Health reading updated')}
+  else{D.health.push({id:uid(),d:new Date().toISOString(),...r});log('Health reading saved')}
+  save();e.target.reset();render();toast('Reading saved')};
+function editH(id){const h=D.health.find(x=>x.id===id);if(!h)return;
+  $('hSys').value=h.sys||'';$('hDia').value=h.dia||'';$('hSug').value=h.sug||'';$('hHr').value=h.hr||'';$('hSlp').value=h.slp||'';$('hQ').value=h.q||'';beginEdit('hl','hForm',id,'💾 Update reading')}
+function delH(id){D.health=D.health.filter(h=>h.id!==id);save();render()}
+$('hChart').onchange=renderHealth;
+function renderHealth(){
+  $('hBody').innerHTML=D.health.length?[...D.health].reverse().map(h=>`<tr><td>${new Date(h.d).toLocaleString()}</td><td>${h.sys?h.sys+'/'+(h.dia||'?'):'–'}</td><td>${h.sug||'–'}</td><td>${h.hr||'–'}</td><td>${h.slp?h.slp+'h '+esc(h.q):'–'}</td><td class="editonly"><button class="small ghost" onclick="editH('${h.id}')">✏️</button> <button class="small danger" onclick="delH('${h.id}')">✕</button></td></tr>`).join(''):'<tr><td colspan="6">No readings yet.</td></tr>';
+  const k=$('hChart').value,pts=D.health.filter(h=>h[k]).slice(-12);
+  if(pts.length<2){$('chartBox').innerHTML='<div class="empty">Add at least 2 readings to see a chart.</div>';return}
+  const vals=pts.map(p=>p[k]),mn=Math.min(...vals)-5,mx=Math.max(...vals)+5,W=600,H=220,P=34;
+  const X=i=>P+i*(W-2*P)/(pts.length-1),Y=v=>H-P-(v-mn)*(H-2*P)/(mx-mn||1);
+  $('chartBox').innerHTML=`<svg viewBox="0 0 ${W} ${H}"><polyline fill="none" stroke="#0f766e" stroke-width="3" points="${pts.map((p,i)=>X(i)+','+Y(p[k])).join(' ')}"/>
+  ${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p[k])}" r="5" fill="#14b8a6"/><text x="${X(i)}" y="${Y(p[k])-10}" font-size="12" text-anchor="middle">${p[k]}</text><text x="${X(i)}" y="${H-10}" font-size="10" text-anchor="middle" fill="#5c726f">${new Date(p.d).getDate()}/${new Date(p.d).getMonth()+1}</text>`).join('')}</svg>`}
+$('csvBtn').onclick=()=>{const rows=[['Date','Systolic','Diastolic','Sugar','HeartRate','SleepHours','SleepQuality'],...D.health.map(h=>[h.d,h.sys,h.dia,h.sug,h.hr,h.slp,h.q])];
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(v=>'"'+(v??'')+'"').join(',')).join('\n')],{type:'text/csv'}));a.download='health-metrics.csv';a.click()};
+function healthLabel(h){const p=[];if(h.sys)p.push(`BP ${h.sys}/${h.dia||'?'}`);if(h.sug)p.push(`Sugar ${h.sug}`);if(h.hr)p.push(`HR ${h.hr}`);return p.join(' · ')}
+
+/* ============ care details ============ */
+$('infoForm').onsubmit=e=>{e.preventDefault();
+  D.info={name:$('iName').value,age:$('iAge').value,blood:$('iBlood').value,all:$('iAll').value,cond:$('iCond').value,addr:$('iAddr').value,ins:$('iIns').value,note:$('iNote').value};
+  log('Care details updated');save();render();toast('Details saved')};
+function renderInfo(){const i=D.info;
+  if(!document.activeElement||!document.activeElement.closest('#infoForm')){$('iName').value=i.name||'';$('iAge').value=i.age||'';$('iBlood').value=i.blood||'';$('iAll').value=i.all||'';$('iCond').value=i.cond||'';$('iAddr').value=i.addr||'';$('iIns').value=i.ins||'';$('iNote').value=i.note||''}
+  $('infoView').innerHTML=i.name||i.blood?`<div class="t big">${esc(i.name)} ${i.age?'· '+esc(i.age)+' yrs':''}</div>
+   <p>🩸 Blood group: <b>${esc(i.blood||'–')}</b><br>⚠️ Allergies: <b>${esc(i.all||'None noted')}</b><br>🏥 Conditions: <b>${esc(i.cond||'–')}</b><br>🏠 Address: ${esc(i.addr||'–')}<br>🪪 Insurance/ID: ${esc(i.ins||'–')}</p><p>${esc(i.note)}</p>`:'<div class="empty">No details saved yet.</div>'}
+
+/* ============ pharmacy ============ */
+$('pharmForm').onsubmit=e=>{e.preventDefault();D.pharm={name:$('pName').value.trim(),phone:$('pPhone').value.replace(/[^\d+]/g,'')};log('Pharmacy saved');save();render();toast('Pharmacy saved')};
+function requestRefill(id){const m=D.meds.find(x=>x.id===id);if(!m)return;
+  D.refills.unshift({id:uid(),med:m.name,date:new Date().toLocaleString(),status:'Requested'});log('Refill requested: '+m.name);save();
+  const msg=`Hello, please prepare a refill of ${m.name} ${m.dose||''} for ${D.info.name||'our patient'}. Thank you.`;
+  if(D.pharm.phone)window.open('https://wa.me/'+D.pharm.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');else toast('Request saved. Add pharmacy phone to send it.');render()}
+function setRef(id,s){const r=D.refills.find(x=>x.id===id);if(r){r.status=s;if(s==='Ready for pickup')log('Pharmacy: '+r.med+' ready for pickup');save();render()}}
+function renderPharm(){$('pName').value=D.pharm.name||'';$('pPhone').value=D.pharm.phone||'';
+  const low=D.meds.filter(m=>m.stock<=7);
+  $('refillList').innerHTML=low.length?low.map(m=>`<div class="item"><div><div class="t">${esc(m.name)}</div><div class="s">Only ${m.stock} left</div></div><button class="small editonly" onclick="requestRefill('${m.id}')">Request refill</button></div>`).join(''):'<div class="empty">All medicines well stocked ✔</div>';
+  $('refReqs').innerHTML=D.refills.length?D.refills.map(r=>`<div class="item"><div><div class="t">${esc(r.med)}</div><div class="s">${esc(r.date)}</div></div><div class="row"><span class="tag ${r.status==='Ready for pickup'?'ok':'warn'}">${r.status}</span>${r.status==='Requested'?`<button class="small ghost editonly" onclick="setRef('${r.id}','Ready for pickup')">Mark ready for pickup</button>`:''}</div></div>`).join(''):'<div class="empty">No refill requests yet.</div>'}
+
+/* ============ family monitor ============ */
+$('checkinBtn').onclick=()=>{D.checkin=new Date().toLocaleString();log('✅ Daily check-in: user is OK');save();render();toast('Check-in sent to family 💚')};
+function renderFamily(){
+  const tk=D.meds.filter(m=>D.taken[takenKey(m.id)]).length,last=D.health[D.health.length-1];
+  const ci=D.checkin&&new Date(D.checkin).toDateString()===new Date().toDateString();
+  $('famCards').innerHTML=`<div class="card"><h3>Daily check-in</h3><div class="big">${ci?'✅ Done':'⚠️ Not yet'}</div><div class="s">${esc(D.checkin||'No check-in recorded')}</div></div>
+  <div class="card"><h3>Medicines today</h3><div class="big">${tk}/${D.meds.length}</div><div class="s">taken</div></div>
+  <div class="card"><h3>Latest health</h3><div class="big" style="font-size:1.1rem">${last?esc(healthLabel(last)):'—'}</div><div class="s">${last?new Date(last.d).toLocaleString():''}</div></div>
+  <div class="card"><h3>Next appointment</h3><div class="big" style="font-size:1.1rem">${nextAppt()?esc(nextAppt().doc):'—'}</div><div class="s">${nextAppt()?esc(nextAppt().date):''}</div></div>`;
+  $('logList').innerHTML=D.log.length?D.log.slice(0,30).map(l=>`<div class="item"><div class="t" style="font-weight:500">${esc(l.msg)}</div><div class="s">${esc(l.t)}</div></div>`).join(''):'<div class="empty">No activity yet.</div>'}
+
+/* ============ dashboard ============ */
+function nextAppt(){return D.appts.find(a=>dayDiff(a.date)>=0)}
+function renderHome(){
+  const h=new Date().getHours();$('greet').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+(D.info.name?', '+D.info.name.split(' ')[0]:'')+'!';
+  const pend=D.meds.filter(m=>!D.taken[takenKey(m.id)]),nx=pend.find(m=>m.time>=nowHM())||pend[0];
+  $('dNext').textContent=nx?fmt12(nx.time):'All done ✔';$('dNextSub').textContent=nx?nx.name+' '+(nx.dose||''):'No pending doses';
+  const a=nextAppt();$('dAppt').textContent=a?when(a.date):'None';$('dApptSub').textContent=a?a.doc+' · '+(a.purp||'Visit'):'';
+  $('dCont').textContent=D.contacts.length;
+  const l=D.health[D.health.length-1];$('dHealth').textContent=l?(l.sys?l.sys+'/'+l.dia:l.sug?l.sug+' mg/dL':l.hr?l.hr+' bpm':'—'):'—';$('dHealthSub').textContent=l?new Date(l.d).toLocaleDateString():'No readings';
+  $('dToday').innerHTML=D.meds.length?D.meds.map(m=>{const t=D.taken[takenKey(m.id)],late=!t&&m.time<nowHM();
+    return `<div class="item"><div><div class="t">${fmt12(m.time)} — ${esc(m.name)} ${esc(m.dose)}</div><div class="s">${esc(m.note)}</div></div>${t?'<span class="tag ok">✔ Taken</span>':`<div class="row">${late?'<span class="tag late">Overdue</span>':''}<button class="small editonly" onclick="markTaken('${m.id}')">Mark taken</button></div>`}</div>`}).join(''):'<div class="empty">Add medicines to see today\'s schedule.</div>'}
+
+/* ============ reminders ============ */
+$('notifBtn').onclick=async()=>{if(!('Notification'in window))return toast('Notifications not supported here');
+  const p=await Notification.requestPermission();toast(p==='granted'?'Notifications enabled ✔':'Permission not granted (in-page alerts still work)')};
+function showAlarm(title,body){beep();toast('⏰ '+title+' — '+body);
+  try{if(Notification.permission==='granted')new Notification('CareConnect: '+title,{body})}catch(e){}}
+function checkReminders(){if(readOnly)return; /* only the patient's device rings */
+  const n=nowHM(),dk=today();let ch=false;
+  D.meds.forEach(m=>{const k=dk+'|m|'+m.id+'|'+m.time;if(m.time===n&&!D.fired[k]&&!D.taken[takenKey(m.id)]){D.fired[k]=1;ch=true;showAlarm('Time for your medicine','Take '+m.name+' '+(m.dose||''));}});
+  D.appts.forEach(a=>{if(a.date===dk&&a.time===n){const k=dk+'|a|'+a.id;if(!D.fired[k]){D.fired[k]=1;ch=true;showAlarm('Appointment now',a.doc+' – '+(a.purp||''))}}
+    if(dayDiff(a.date)===1&&n==='09:00'){const k=dk+'|a1|'+a.id;if(!D.fired[k]){D.fired[k]=1;ch=true;showAlarm('Appointment tomorrow',a.doc+' at '+fmt12(a.time))}}});
+  Object.keys(D.fired).forEach(k=>{if(!k.startsWith(dk)){delete D.fired[k];ch=true}});if(ch)save()}
+setInterval(()=>{checkReminders();renderHome()},20000);
+
+/* ============ caregiver / role ============ */
+function setRole(ro){readOnly=ro;document.body.classList.toggle('ro',ro);$('roleLbl').textContent=ro?'Caregiver mode (view only)':'Patient mode';$('roleBtn').textContent=ro?'Logout':'Caregiver login';
+  ['medForm','apptForm','contForm','hForm','infoForm','pharmForm','pinForm'].forEach(f=>$(f).style.display=ro?'none':'')}
+$('roleBtn').onclick=()=>{
+  if(readOnly){if(online&&token)fetch('/api/logout',{method:'POST',headers:{'X-Token':token}}).catch(()=>{});token='';setRole(false);toast('Back to patient mode');render();return}
+  $('pinIn').value='';$('loginModal').classList.add('on');$('pinIn').focus()};
+$('pinOk').onclick=async()=>{let ok=false;
+  if(online){try{const r=await fetch('/api/login',{method:'POST',body:$('pinIn').value});if(r.ok){token=(await r.text()).trim();ok=true}}catch(e){}}
+  else ok=$('pinIn').value===D.pin;
+  if(ok){$('loginModal').classList.remove('on');setRole(true);toast('Caregiver logged in');render()}else toast('Wrong PIN')};
+$('pinIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('pinOk').click()});
+$('pinForm').onsubmit=async e=>{e.preventDefault();const p=$('pinNew').value.trim();
+  if(!/^\d{4,8}$/.test(p))return toast('PIN must be 4–8 digits');
+  if(online){try{const r=await fetch('/api/pin',{method:'POST',headers:{'X-Token':token},body:p});if(!r.ok)return toast('Could not change PIN')}catch(x){return toast('Server unreachable')}}
+  else{D.pin=p;save()}
+  e.target.reset();toast('Caregiver PIN changed ✔')};
+$('pinCancel').onclick=()=>$('loginModal').classList.remove('on');
+$('txtBtn').onclick=()=>document.body.classList.toggle('big-text');
+
+/* ============ render ============ */
+function render(){renderHome();renderMeds();renderAppts();renderContacts();renderHealth();renderInfo();renderPharm();renderFamily()}
+init();
+</script>
+</body>
+</html>
